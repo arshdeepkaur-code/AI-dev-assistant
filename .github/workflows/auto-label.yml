@@ -3,6 +3,7 @@ name: Auto Label
 on:
   issues:
     types: [opened, edited]
+
   pull_request:
     types: [opened, edited, synchronize]
 
@@ -21,21 +22,24 @@ jobs:
 
             const labels = [];
 
+            // -------------------------
             // Type labels
+            // -------------------------
+
             if (text.match(/\bfix\b|\bbug\b|\berror\b|\bcrash\b|\bbroken\b/))
-              labels.push('type: bug');
+              labels.push('type:bug');
 
             if (text.match(/\badd\b|\bfeature\b|\benhance\b|\bnew\b|\bimplement\b/))
               labels.push('enhancement');
 
             if (text.match(/\bdoc\b|\breadme\b|\bcontribut\b|\bguide\b/))
-              labels.push('type: docs');
+              labels.push('type:docs');
 
             if (text.match(/\btest\b|\bspec\b|\bpytest\b|\bcoverage\b/))
-              labels.push('type: testing');
+              labels.push('type:testing');
 
             if (text.match(/\baccess\b|\baria\b|\bscreen reader\b|\bwcag\b/))
-              labels.push('type: accessibility');
+              labels.push('type:accessibility');
 
             if (text.match(/\bsecur\b|\bvulner\b|\bxss\b|\binjection\b/))
               labels.push('security');
@@ -43,34 +47,56 @@ jobs:
             if (text.match(/\bperform\b|\bcache\b|\bspeed\b|\boptim\b|\bslow\b/))
               labels.push('performance');
 
+            if (text.match(/\bci\b|\bworkflow\b|\bgithub action\b|\bdeploy\b/))
+              labels.push('type:devops');
+
+            // -------------------------
             // Area labels
+            // -------------------------
+
             if (text.match(/\bfrontend\b|\bui\b|\bhtml\b|\bcss\b|\bindex\.html\b/))
               labels.push('frontend');
 
             if (text.match(/\bbackend\b|\bapi\b|\bfastapi\b|\bendpoint\b|\brouter\b/))
               labels.push('backend');
 
+            // -------------------------
             // Difficulty labels
+            // -------------------------
+
             if (text.match(/\bbeginner\b|\bgood first\b/))
-              labels.push('level: beginner');
+              labels.push('level:beginner');
 
             if (text.match(/\bintermediate\b/))
-              labels.push('level: intermediate');
+              labels.push('level:intermediate');
 
             if (text.match(/\badvanced\b|\bcomplex\b/))
-              labels.push('level: advanced');
+              labels.push('level:advanced');
 
-            // Add GSSoC label automatically
+            // -------------------------
+            // GSSoC label
+            // -------------------------
+
             labels.push('gssoc2026');
 
             // Remove duplicates
             const uniqueLabels = [...new Set(labels)];
 
-            if (uniqueLabels.length > 0) {
+            // Existing labels on issue
+            const existingLabels = context.payload.issue.labels.map(
+              label => label.name
+            );
+
+            // Only add labels not already present
+            const newLabels = uniqueLabels.filter(
+              label => !existingLabels.includes(label)
+            );
+
+            if (newLabels.length > 0) {
               await github.rest.issues.addLabels({
                 ...context.repo,
                 issue_number: context.payload.issue.number,
-                labels: uniqueLabels
+                labels: newLabels
               });
             }
 
